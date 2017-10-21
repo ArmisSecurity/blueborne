@@ -6,6 +6,8 @@ It also uses the SDP Information leak vulnerability (CVE-2017-0785) to bypass AS
 It achieves code execution on a Google Pixel Android smartphone running version 7.1.2 with Security Patch Level July or August 2017.
 This code can also be altered a bit in order to target other Android smartphones.
 
+All code can be found under android dir.
+
 For more details you may read the full technical white paper available here:
 
 https://www.armis.com/blueborne/
