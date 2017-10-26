@@ -89,7 +89,7 @@ def set_rand_bdaddr(src_hci):
 
 
 def memory_leak_get_bases(src, src_hci, dst):
-    prog = log.progress('Doing stack memeory leak...')
+    prog = log.progress('Doing stack memory leak...')
 
     # Get leaked stack data. This memory leak gets "deterministic" "garbage" from the stack.
     result = bluedroid.do_sdp_info_leak(dst, src)
