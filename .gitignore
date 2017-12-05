@@ -1,0 +1,14 @@
+### Python template
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Vim temp files
+*.swp
+*.swo
+*.swn
+
+# MAC
+.DS_Store
+
