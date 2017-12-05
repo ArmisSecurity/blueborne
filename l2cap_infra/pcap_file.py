@@ -1,3 +1,4 @@
+import struct
 
 LINK_TYPES = {
     'BLE': 251,

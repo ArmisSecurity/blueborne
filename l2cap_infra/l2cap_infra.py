@@ -110,7 +110,7 @@ class Loop(object):
     def _iterate_with_packet(self, packet):
         queue = self._build_queue(packet)
         if len(queue) == 0:
-            #print 'WARNING: ignored packet %s' % (repr(packet), )
+            print 'WARNING: ignored packet %s' % (repr(packet), )
             return []
         results = []
         while len(queue) != 0:
@@ -120,7 +120,7 @@ class Loop(object):
 
     def iterate(self):
         packet = self._sock.recv()
-        #print('<< %s' % (repr(packet), ))
+        # print('<< %s' % (repr(packet), ))
         return self._iterate_with_packet(packet)
 
     def is_waiting(self):
@@ -138,7 +138,7 @@ class Loop(object):
             self.iterate()
 
     def send(self, packet):
-        #print('>> %s' % (repr(packet), ))
+        # print('>> %s' % (repr(packet), ))
         self._sock.send(packet)
 
 L2CAP_DEFAULT_MTU = 672
@@ -262,15 +262,17 @@ def reset(loop):
     loop.send(cmd)
     assert loop.cont() == [True]
 
-def connect(loop, addr):
+def acl_connect(loop, addr):
     cmd = HCI_Hdr() / HCI_Command_Hdr() / HCI_Cmd_Create_Connection(bd_addr=addr)
     loop.ignore(lambda evt: is_pending_evt_for_cmd(cmd, evt))
     loop.on_pkt(HCI_Event_Connection_Complete,
-                lambda loop, evt: evt[HCI_Event_Connection_Complete].connection_handle)
+                lambda loop, evt: evt[HCI_Event_Connection_Complete])
     loop.send(cmd)
     result = loop.cont()
+    
     assert len(result) == 1
-    return result[0]
+    result = result[0]
+    return result.status == 0, result.connection_handle
 
 def ignore_evt(loop, code):
     loop.ignore(lambda evt: evt is not None and HCI_Event_Hdr in evt and evt.code == code)
@@ -368,6 +370,7 @@ def reply_to_conf_req_accept(loop, scid, dcid):
                                              L2CAP_CmdHdr(id=conf_req.id) /
                                              L2CAP_ConfResp(scid=dcid, flags=0, result='success')))
 
+# Do the lockstep confiugration process (with EFS) - only with targets which supports this.
 def lockstep_efs_conf_process(loop, scid, dcid):
     # Note that stype == L2CAP_SERV_NOTRAFIC (0) which is important
     efs = binascii.unhexlify('0610') + (binascii.unhexlify('00') * 0x10)
@@ -398,6 +401,21 @@ def lockstep_efs_conf_process(loop, scid, dcid):
             L2CAP_ConfResp(scid=dcid, flags=0, result=0))
     loop.send(resp)
 
+# Do the standard configuration process
+def standard_conf_process(loop, scid, dcid):
+    conf_req = (L2CAP_Hdr(cid=1) / L2CAP_CmdHdr(id=1) /
+                L2CAP_ConfReq(dcid=dcid, flags=0) /
+                Raw(binascii.unhexlify('0102a002')))
+    loop.on(lambda conf_resp: conf_resp is not None and
+                              conf_resp.id == 1 and
+                              L2CAP_ConfResp in conf_resp and
+                              conf_resp.scid == scid and
+                              conf_resp.result == 0, # success
+            lambda loop, conf_resp: conf_resp)
+    loop.send(conf_req)
+    loop.cont()
+
+    
 def handle_information_negotiation_process(l2cap_loop):
     # There is an inherent race that might exist in the information negotiation process.
     # If both sides of the connection are waiting for the other side to send the first info req
@@ -437,10 +455,10 @@ def create_l2cap_connection(interface, target, psm='SDP', with_mutual_config=Tru
     else:
         user_socket = BluetoothUserSocket(hci_devid(interface))
         
-    loop = Loop(BluetoothUserSocket(user_socket))
+    loop = Loop(user_socket)
     reset(loop)
-    handle = connect(loop, target)
-    if handle == 0xffff:
+    is_connected, handle = acl_connect(loop, target)
+    if not is_connected:
         print("Unable to connect target via Bluetooth")
         sys.exit(1)
     
@@ -483,13 +501,14 @@ def l2cap_mutual_configration(l2cap_loop, dcid):
     # Register handler to accept any configuration request coming from the other peer.
     reply_to_conf_req_accept(l2cap_loop, OUR_LOCAL_SCID, dcid)
     # Negotiate our own configuration parametres, using the lockstep procedure (using the pending state)
-    lockstep_efs_conf_process(l2cap_loop, OUR_LOCAL_SCID, dcid)
+    standard_conf_process(l2cap_loop, OUR_LOCAL_SCID, dcid)
     # Reaching this phase, the connection is in CONNECTED state.
     
 def main(src_hci, dst_bdaddr, pcap_path=None):
     l2cap_loop, _ = create_l2cap_connection(src_hci, dst_bdaddr, pcap_path=pcap_path)
 
     # Seding 'test' to the established l2cap connection
+    print("Sending 'test' in l2cap connection")
     l2cap_loop.send(L2CAP_Hdr(cid=OUR_LOCAL_SCID) / Raw('test'))
     l2cap_loop.on(lambda pkt: True,
                   lambda loop, pkt: pkt)
