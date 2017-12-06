@@ -10,9 +10,8 @@ For more details you may read the full technical white paper available here:
 
 https://www.armis.com/blueborne/
 
-In addition a detailed blog post on the exploitation of this vulnerability would also go live on Sunday 22nd of October here:
-
-https://www.armis.com/blog/
+In addition a detailed blog post on the exploitation of this vulnerability is available here:
+https://www.armis.com/blueborne-on-android-exploiting-rce-over-the-air/
 
 ===============
 
