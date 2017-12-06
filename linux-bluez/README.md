@@ -11,3 +11,7 @@ To run (either exploit script, found under the relavant device dir):
 IP needs to be accessible from the victim (should be the IP of the machine that runs the exploit)
 
 
+A blog post on these exploits can be found here:
+https://www.armis.com/armis-demonstrates-bluetooth-worm-and-linux-exploit-at-black-hat/
+
+A detailed whitepaper in the above link as well.
