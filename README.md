@@ -9,6 +9,8 @@ Under 'linux-bluez' exploits for the Linux-RCE vulnerability (CVE-2017-1000251) 
 
 Under 'l2cap_infra' a general testing framework to send and receive raw l2cap messages (using scapy) can be found.
 
+Under 'nRF24_BDADDR_Sniffer' a tool to capture bluetooth mac addresses (BDADDR) over the air, using a nRF24L01 chip
+
 For more details on BlueBorne, you may read the full technical white paper available here:
 
 https://www.armis.com/blueborne/
