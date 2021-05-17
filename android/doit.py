@@ -76,7 +76,7 @@ def set_bt_name(payload, src_hci, src, dst):
 
 
 def set_rand_bdaddr(src_hci):
-    addr = ['%02x' % (ord(c),) for c in os.urandom(6)]
+    addr = ['%02x' % c for c in os.urandom(6)]
     # NOTW: works only with CSR bluetooth adapters!
     os.system('sudo bccmd -d %s psset -r bdaddr 0x%s 0x00 0x%s 0x%s 0x%s 0x00 0x%s 0x%s' %
               (src_hci, addr[3], addr[5], addr[4], addr[2], addr[1], addr[0]))
